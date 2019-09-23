@@ -20,7 +20,7 @@ func httpRedirect(w http.ResponseWriter, r *http.Request) {
 //Accept cross site API call
 func acceptCrossSiteAPI(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		acceptedOrigin := map[string]bool{"http://localhost:8080": true}
+		acceptedOrigin := map[string]bool{"http://localhost": true}
 		origin := ""
 		if origins, ok := r.Header["Origin"]; ok {
 			if len(origins) > 0 {
