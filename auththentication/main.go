@@ -56,7 +56,7 @@ func acceptCrossSiteAPI(handler http.Handler) http.Handler {
 func main() {
 
 	//Open database connect
-	db, err := sql.Open("mysql", "[username]]:[password]/[database]")
+	db, err := sql.Open("mysql", "[username]:[password]/[database]")
 	if err != nil {
 		panic(err)
 	}
