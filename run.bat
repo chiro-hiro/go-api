@@ -1,0 +1,1 @@
+build.bat && go run cmd\main.go

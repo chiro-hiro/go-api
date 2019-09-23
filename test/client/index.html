@@ -1,0 +1,350 @@
+<html>
+
+<body>
+    <script src='jquery.js'></script>
+    <textarea name='' id='textResult' style='background-color: black; color: white;' cols='190' rows='40'></textarea>
+    <hr/>
+    <button id='buttonAutoTest'>[ Auto Test ]</button>
+    <script>
+        function equal(a, b) {
+            var c = []
+            if (typeof (a) !== typeof (b)) {
+                return false;
+            }
+            if (typeof (a) !== typeof ({}) && typeof (a) !== typeof ([])) {
+                return a == b;
+            }
+            for (i in a) {
+                c.push(i)
+                if (a[i] !== b[i]) {
+                    return false;
+                }
+            }
+            for (i in b) {
+                if (c.indexOf(i) > 0) {
+                    continue;
+                }
+                if (a[i] !== b[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        var hexMap = [];
+        var revertHexMap = {};
+        for (var i = 0; i <= 255; i++) {
+            var encoded = ((i < 16) ? '0' : '') + i.toString(16)
+            hexMap[i] = encoded;
+            revertHexMap[encoded] = i;
+        }
+        function hex(input) {
+            var result = '';
+            if (typeof (input) === typeof ('')) {
+                for (var i = 0; i < input.length; i++) {
+                    result += hexMap[input[i].charCodeAt()];
+                }
+            } else {
+                for (var i = 0; i < input.length; i++) {
+                    result += hexMap[input[i]];
+                }
+            }
+            return result;
+        }
+
+        function unhex(input) {
+            input = (input.length % 2 == 1) ? '0' + input : input;
+            var result = new Uint8Array(input.length / 2);
+            var c = 0;
+            for (var i = 0; i < input.length; i += 2) {
+                result[c++] = revertHexMap[input.substr(i, 2)];
+            }
+            return result;
+        }
+
+        var randInt = () => (Math.random() * 0xffffff | 0);
+
+        function log(logIt, val) {
+            if (logIt)
+                $('#textResult').val($('#textResult').val() + val + '\n');
+        }
+
+        function rollingTest() {
+            setTimeout(function () {
+                runTest();
+            }, 10);
+        }
+
+        function ajaxIt(url, data, required, res) {
+            $.ajax({
+                type: 'POST',
+                url: 'https://localhost:443' + url,
+                data: data,
+                xhrFields: {
+                    withCredentials: true
+                },
+                beforeSend: function (xhr) {
+                    if (typeof (userStore) !== 'undefined' && typeof (userStore.sessionID) !== 'undefined') {
+                        xhr.setRequestHeader('X-Session-Id', userStore.sessionID);
+                    }
+                },
+                complete: function (jxhr, status) {
+                    var jsonDat = JSON.parse(jxhr.responseText);
+                    var isEqual = false;
+                    if (required === null) {
+                        isEqual = true
+                    } else {
+                        isEqual = equal(jsonDat.Data, required);
+                    }
+                    if (typeof (res) == typeof ({})) {
+                        res.recent = jsonDat.Data;
+                    }
+                    console.log(required, isEqual);
+                    log(true, '[' + status + '|' + (isEqual ? 'passed' : 'failed') + '|' + url + '] ' + jxhr.responseText);
+                    log(!isEqual, '    > `' + JSON.stringify(jsonDat.Data) + '` !== `' + JSON.stringify(required) + '` | ' + JSON.stringify(data));
+                    rollingTest();
+                }
+            });
+        }
+
+        var testCase = [];
+        var currentTest = 0;
+        var userData = {};
+        var userStore = {};
+
+        function runTest() {
+            if (typeof (testCase[currentTest]) !== 'undefined') {
+                testCase[currentTest++]();
+            }
+            else {
+                currentTest = 0;
+                return;
+            }
+        }
+
+        $('#buttonAutoTest').click(function () {
+            runTest();
+        });
+
+
+        //Hex string
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'This is a valid string: 世界' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are null character ' + unescape('\x00') }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'String with single quote \'' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'String with double quote "' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are tab ' + unescape('\x09') }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are end line ' + unescape('\x0a') }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are ”' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are ‘' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidValue', { value: 'Here are `' }, false);
+        });
+
+
+        //Hex string
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: '1122ff' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: '' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: '11ffa' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: '11ffax' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: 'x' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isHexString', { value: '@' }, false);
+        });
+
+        //Username
+        testCase.push(() => {
+            ajaxIt('/validation/isValidUsername', { value: 'chiro@' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidUsername', { value: 'ch' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidUsername', { value: '1chiro' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidUsername', { value: 'chiro.8x' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidUsername', { value: 'chiro_hiro' }, true);
+        });
+
+        //Email
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro@fkguru.com' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro@fkguru.com.vn' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro8x@fkguru.com.vn' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro_8x@fkguru.com.vn' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: '8chiro_8x@fkguru.com.vn' }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro@gmail' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chi_.ro@gmail' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: '_chiro@gmail.com' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: '.chiro@gmail.com' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'ch@iro@gmail.com' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro@gmail_com.vn' }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidEmail', { value: 'chiro#7540946@gmail.com.vn' }, false);
+        });
+
+        //Password
+        testCase.push(() => {
+            ajaxIt('/validation/isValidPassword', { value: hex('chidaS!') }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidPassword', { value: hex('ch@iro@gmaidsadcom') }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/validation/isValidPassword', { value: hex(' '.repeat(32)) }, true);
+        });
+
+        //Register
+        testCase.push(() => {
+            ajaxIt('/user/register', { username: 'chiro#' + randInt(), email: 'chiro' + randInt() + '@gmail.com.vn', password: hex('#@$%^\'' + randInt()) }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/register', { username: 'chiro' + randInt(), email: 'chiro' + randInt() + '@gmail', password: hex('#@$%^\'' + randInt()) }, false);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/register', { username: 'chiro' + randInt(), email: 'chiro' + randInt() + '@gmail.com.vn', password: hex('#@$%') }, false);
+        });
+
+        testCase.push(() => {
+            userData = { username: 'chiro' + randInt(), email: 'chiro' + randInt() + '@gmail.com.vn', password: hex('#@$%\'' + randInt()) };
+            ajaxIt('/user/register', userData, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/login', { username: userData.username, password: userData.password }, null, userStore);
+        });
+        testCase.push(() => {
+            if (typeof (userStore.recent) !== 'undefined') {
+                log(true, '    > Login success with session id: `' + userStore.recent + '`')
+                userStore.sessionID = userStore.recent;
+                delete (userStore.recent);
+            } else {
+                log(true, '    > Login failed')
+            }
+            rollingTest();
+        });
+        testCase.push(() => {
+            ajaxIt('/user/getUser', {}, null, userStore);
+        });
+        testCase.push(() => {
+            if (typeof (userStore.recent) !== 'undefined') {
+                log(true, '    > Get user\'s information success: `' + JSON.stringify(userStore.recent) + '`')
+                userStore.userData = userStore.recent;
+                delete (userStore.recent);
+            } else {
+                log(true, '    > Get failed')
+            }
+            rollingTest();
+        });
+
+        //updateProfile
+        testCase.push(() => {
+            ajaxIt('/user/updateProfile', { field: "first-name", value: "Chiro" }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/updateProfile', { field: "last-name", value: "Hiro" }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/updateProfile', { field: "address", value: "No where" }, true);
+        });
+        testCase.push(() => {
+            ajaxIt('/user/updateProfile', { field: "orc", value: "Must fail" }, false);
+        });
+
+        //Get user profile
+        testCase.push(() => {
+            ajaxIt('/user/getProfile', {}, null, userStore);
+        });
+        testCase.push(() => {
+            if (typeof (userStore.recent) !== 'undefined') {
+                log(true, '    > Get user\'s profile success: `' + JSON.stringify(userStore.recent) + '`')
+                userStore.userProfile = userStore.recent;
+                delete (userStore.recent);
+            } else {
+                log(true, '    > Get failed')
+            }
+            rollingTest();
+        });
+
+        //Change password
+        var newPassword = hex('#@$%\'"""d' + randInt())
+        testCase.push(() => {
+            ajaxIt('/user/updatePassword', { currentPassword: userData.password, newPassword }, true);
+        });
+        testCase.push(() => {
+            userData.password = newPassword;
+            ajaxIt('/user/login', { username: userData.username, password: newPassword }, null, userStore);
+        });
+        testCase.push(() => {
+            if (typeof (userStore.recent) !== 'undefined') {
+                log(true, '    > Login success with session id: `' + userStore.recent + '`')
+                userStore.sessionID = userStore.recent;
+                delete (userStore.recent);
+            } else {
+                log(true, '    > Login failed')
+            }
+            rollingTest();
+        });
+
+        //Logout user
+        testCase.push(() => {
+            ajaxIt('/user/logout', {}, true);
+            rollingTest();
+        });
+        testCase.push(() => {
+            for (var i in userStore) {
+                delete userStore[i];
+            }
+        });
+    </script>
+</body>
+
+</html>

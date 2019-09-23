@@ -1,0 +1,11 @@
+@echo off
+SET CURDIR=%cd%
+SET GOPATH=C:\go-work
+SET MIRROR=%GOPATH%\src\github.com\chiro-hiro\go-api
+CD %MIRROR%\users\
+go install
+CD %MIRROR%\exports\
+go install
+CD %MIRROR%\utilities\
+go install
+CD %CURDIR%

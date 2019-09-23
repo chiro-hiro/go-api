@@ -1,0 +1,94 @@
+	/*7
+		db, _ := sql.Open("mysql", "root:!thepirate@/test")
+		db.*/7
+	type response struct {
+		Err bool
+	}
+	res := response{Err: true}
+	data, err := json.Marshal(res)
+	if err == nil {
+		fmt.Println(string(data))
+	}
+	/*
+		mux := http.NewServeMux()
+		mux.HandleFunc("/", sayHello)
+		mux.HandleFunc("/testPost/", testPost)
+		wrappedMux := acceptCrossSiteAPI(mux)
+		if err := http.ListenAndServe(":8080", wrappedMux); err != nil {
+			panic(err)
+		}*/
+	/*
+		http.HandleFunc("/testPost/", testPost)
+		http.HandleFunc("/getUser/[a-fA-F0-9]+$", sayHello)
+		http.HandleFunc("/api/", test)
+	*/
+
+	//s := regexp.MustCompile("[a-fA-F0-9]+$").Split("ababbabbb", 5)
+
+	//fmt.Println(s)
+}
+
+/*
+func main() {
+
+			fmt.Println(isVailidUsername("chi"))
+			fmt.Println(isVailidUsername("chiro"))
+			fmt.Println(isVailidUsername("8chiro"))
+			fmt.Println(isVailidUsername("8chiro_"))
+			fmt.Println(isHexString("aff123"))
+			fmt.Println(isHexString("affF123"))
+
+			u := User{ID: 123, Username: "Chiro"}
+
+			fmt.Println(u.ChangePassword("dsadsadsadsa23232"))
+			fmt.Println(u.password)
+			fmt.Printf("%x", u.salt)
+
+		v := make([]byte, 20)
+		fmt.Println(v)
+
+		u := User{ID: []byte("Hello"), Username: "chiro"}
+
+		fmt.Println(u.ChangePassword("dsadsadsadsa23232"))
+		fmt.Printf("%x\n", u.password)
+		fmt.Printf("%x\n", u.salt)
+
+		u.NewSession()
+		u.NewSession()
+		u.NewSession()
+		u.NewSession()
+		fmt.Println("Session:", u.sessions)
+		fmt.Println(u.Login("dsadsadsadsa23232"))
+		fmt.Println("Session:", u.sessions)
+
+	db, _ := sql.Open("mysql", "root:!thepirate@/test")
+	type data struct {
+		id       []byte
+		username string
+		password []byte
+		salt     []byte
+		sessions []byte
+	}
+
+	a := data{}
+	db.QueryRow("SELECT * FROM `users` WHERE `username`=?;", "chiro").Scan(&a.id, &a.username, &a.password, &a.salt, &a.sessions)
+
+	fmt.Println(a)
+	db.Close()
+
+}	*/
+
+
+
+	/*
+		//Users section
+
+		fmt.Println(users.Register("chiro8x", "chiro@fkguru.com", []byte("mary\"'EYHWIUEHWA")))
+		sessionID, _ := users.Login("chiro8x", []byte("mary\"'EYHWIUEHWA"))
+		userInfo, _ := users.GetUserBySession(sessionID)
+		fmt.Println(userInfo)
+		fmt.Println(users.UpdateProfile(userInfo.ID, "firstname", "Chiro"))
+		fmt.Println(users.UpdateProfile(userInfo.ID, "lastname", "Hiro"))
+		fmt.Println(users.UpdateProfile(userInfo.ID, "address", "278 Phan Van Hon"))
+		fmt.Println(users.GetUserProfileBySession(sessionID))
+	*/
